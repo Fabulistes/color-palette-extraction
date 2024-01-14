@@ -1,8 +1,5 @@
-const buildPalette = (colorsList, number) => {
+const buildPalette = (colorsList) => {
   let out = [];
-  const paletteContainer = document.getElementById("palette" + number);
-  // reset the HTML in case you load various images
-  paletteContainer.innerHTML = "";
 
   // const orderedByColor = orderByLuminance(colorsList);
   // const hslColors = convertRGBtoHSL(orderedByColor);
@@ -25,15 +22,30 @@ const buildPalette = (colorsList, number) => {
     }
 
     out.push(hexColor);
-
-    // create the div and text elements for both colors & append it to the document
-    const colorElement = document.createElement("div");
-    colorElement.style.backgroundColor = hexColor;
-    colorElement.appendChild(document.createTextNode(hexColor));
-    paletteContainer.appendChild(colorElement);
   }
 
   return out;
+};
+
+const displayPalettes = (colorsList) => {
+
+  let j = 0;
+
+  colorsList.forEach(palette => {
+
+    const paletteContainer = document.getElementById("palette" + j);
+
+    for (let i = 0; i < palette.length; i++) {
+
+      // create the div and text elements for both colors & append it to the document
+      const colorElement = document.createElement("div");
+      colorElement.style.backgroundColor = palette[i];
+      colorElement.appendChild(document.createTextNode(palette[i]));
+      paletteContainer.appendChild(colorElement);
+    }
+    j++;
+  });
+  
 };
 
 //  Convert each pixel value ( number ) to hexadecimal ( string ) with base 16
@@ -273,97 +285,202 @@ const quantization = (rgbValues, depth, MAX_DEPTH) => {
   ];
 };
 
-const main = () => {
+const processImage = () => {
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  for (let k = 0; k < 6; k++) {
+    const paletteContainer = document.getElementById("palette" + k);
+    // reset the HTML in case you load various images
+    paletteContainer.innerHTML = "";
+  }
+
+  let palettes = [];
+
+  for (let i = 0; i < 6; i++) {
+
+    console.log('--------- part :', i);
+
+      /**
+     * getImageData returns an array full of RGBA values
+     * each pixel consists of four values: the red value of the colour, the green, the blue and the alpha
+     * (transparency). For array value consistency reasons,
+     * the alpha is not from 0 to 1 like it is in the RGBA of CSS, but from 0 to 255.
+     */
+
+    let imageData;
+
+    let c3 = canvas.width / 3;
+    let h2 = canvas.height / 2;
+
+    switch (i) {
+      case 0:
+        imageData = ctx.getImageData(0, 0, c3, h2);
+        break;
+      case 1:
+        imageData = ctx.getImageData(c3, 0, c3, h2);
+        break;
+      case 2:
+        imageData = ctx.getImageData(c3 * 2, 0, c3, h2);
+        break;
+      case 3:
+        imageData = ctx.getImageData(0, h2, c3, h2);
+        break;
+      case 4:
+        imageData = ctx.getImageData(c3, h2, c3, h2);
+        break;
+      case 5:
+        imageData = ctx.getImageData(c3 * 2, h2, c3, h2);
+        break;
+    }
+    
+
+    // Convert the image data to RGB values so its much simpler
+    const rgbArray = buildRgb(imageData.data);
+
+    let palette = [];
+
+    for (let depth = 6; depth < 12; depth++) {
+      
+      console.log('try depth :', depth);
+
+        /**
+       * Color quantization
+       * A process that reduces the number of colors used in an image
+       * while trying to visually maintin the original image as much as possible
+       */
+      const quantColors = quantization(rgbArray, 0, depth);
+      
+      palette = buildPalette(quantColors);
+
+      if(palette.length >= 40) {
+        break;
+      }
+      
+    }
+    
+
+    console.log(palette.length);
+
+    if(palette.length < 40) {
+      console.log('non');
+      alert("impossible de générer 40 échantillons sur l'image");
+      return false;
+    }else {
+      console.log('oui');
+
+      let out = [];
+
+      for (let u = 0; u < palette.length && out.length < 40; u = u + palette.length / 40) {
+        const color = palette[Math.floor(u)];
+        out.push(color);
+      }
+
+      palettes.push(out);
+    }
+
+  }
+
+  return palettes;
+};
+
+const loadImage = () => {
   const imgFile = document.getElementById("imgfile");
   const image = new Image();
   const file = imgFile.files[0];
   const fileReader = new FileReader();
 
+  document.getElementById('video').classList.add('hidden');
+
   // Whenever file & image is loaded procced to extract the information from the image
   fileReader.onload = () => {
     image.onload = () => {
-      // Set the canvas size to be the same as of the uploaded image
+
       const canvas = document.getElementById("canvas");
       canvas.width = image.width;
       canvas.height = image.height;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(image, 0, 0);
 
-      for (let i = 0; i < 6; i++) {
-
-        console.log('--------- part :', i);
-          /**
-         * getImageData returns an array full of RGBA values
-         * each pixel consists of four values: the red value of the colour, the green, the blue and the alpha
-         * (transparency). For array value consistency reasons,
-         * the alpha is not from 0 to 1 like it is in the RGBA of CSS, but from 0 to 255.
-         */
-
-        let imageData;
-
-        let c3 = canvas.width / 3;
-        let h2 = canvas.height / 2;
-
-        switch (i) {
-          case 0:
-            imageData = ctx.getImageData(0, 0, c3, h2);
-            break;
-          case 1:
-            imageData = ctx.getImageData(c3, 0, c3, h2);
-            break;
-          case 2:
-            imageData = ctx.getImageData(c3 * 2, 0, c3, h2);
-            break;
-          case 3:
-            imageData = ctx.getImageData(0, h2, c3, h2);
-            break;
-          case 4:
-            imageData = ctx.getImageData(c3, h2, c3, h2);
-            break;
-          case 5:
-            imageData = ctx.getImageData(c3 * 2, h2, c3, h2);
-            break;
-        }
-        
-
-        // Convert the image data to RGB values so its much simpler
-        const rgbArray = buildRgb(imageData.data);
-
-        let palette = [];
-
-        for (let depth = 6; depth < 12; depth++) {
-          
-          console.log('try depth :', depth);
-
-            /**
-           * Color quantization
-           * A process that reduces the number of colors used in an image
-           * while trying to visually maintin the original image as much as possible
-           */
-          const quantColors = quantization(rgbArray, 0, depth);
-          
-          palette = buildPalette(quantColors, i);
-
-          if(palette.length >= 40) {
-            break;
-          }
-          
-        }
-        
-
-        console.log(palette.length);
-
-        if(palette.length < 40) {
-          console.log('non');
-        }else {
-          console.log('oui');
-        }
-
+      let data = processImage();
+      console.log('image palette', data);
+      if(data) {
+        displayPalettes(data);
       }
     };
     image.src = fileReader.result;
   };
   fileReader.readAsDataURL(file);
-};
+}
 
-main();
+const loadVideo = () => {
+
+  if(document.getElementById('videoframerate').value.includes(',')) {
+    alert('Format framrate incorrect');
+    return;
+  }
+  let framerate = parseFloat(document.getElementById('videoframerate').value);
+
+  let currentFrame = 1;
+
+  let videoColors = [];
+
+  const videoFile = document.getElementById("videofile");
+  const videoEl = document.getElementById('video');
+  const canvas = document.getElementById("canvas");
+  videoEl.classList.remove('hidden');
+
+  const file = videoFile.files[0];
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    videoEl.src = e.target.result;
+
+    videoEl.load();
+
+    videoEl.addEventListener('loadeddata', function() {
+      console.log(videoEl.duration);
+      videoEl.currentTime = (videoEl.duration / (videoEl.duration * framerate));
+    });
+
+    videoEl.addEventListener('seeked', function() {
+      canvas.width = videoEl.videoWidth;
+      canvas.height = videoEl.videoHeight;
+  
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height );
+
+      let data = processImage();
+      videoColors.push(data);
+      if(data) {
+        displayPalettes(data);
+      }
+
+      if(currentFrame < Math.floor(videoEl.duration * framerate)) {
+        currentFrame++;
+        videoEl.currentTime = (videoEl.duration / (videoEl.duration * framerate)) * currentFrame;
+      }else {
+        console.log(videoColors);
+
+        let out = {
+          generator: 'Color palette creator',
+          filename: file.filename,
+          author: 'loic.link',
+          github: 'https://github.com/Fabulistes/color-palette-extraction',
+          data: videoColors
+        }
+
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(out));
+        let dlAnchorElem = document.getElementById('downloadAnchorElem');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", "theme.json");
+        dlAnchorElem.click();
+      }
+    });
+
+
+  }.bind(this);
+  reader.readAsDataURL(file);
+
+}
+

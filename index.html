@@ -18,8 +18,16 @@
     <script src="./index.js"></script>
     <h1>Color palette creator</h1>
     <form action="#">
-      <input type="file" id="imgfile" />
-      <input type="button" id="btnLoad" value="Load" onclick="main();" />
+      <h3>Image</h3>
+      <input type="file" id="imgfile" accept="image/*" />
+      <input type="button" id="btnLoad" value="Load" onclick="loadImage();" />
+    </form>
+    <form action="#">
+      <h3>Vidéo</h3>
+      <input type="file" id="videofile" accept="video/*" />
+      <p>framerate</p>
+      <input type="text" id="videoframerate" value="30" />
+      <input type="button" id="btnLoad" value="Load" onclick="loadVideo();" />
     </form>
     <canvas id="canvas"></canvas>
     <div class="palette" id="palette0"></div>
@@ -34,5 +42,11 @@
     <hr />
     <div class="palette" id="palette5"></div>
     <hr />
+    <video id="video">
+      <source id='video-source' type="video/mp4"/>
+      Your browser does not support HTML5 video.
+    </video>
+
+    <a id="downloadAnchorElem" style="display:none"></a>
   </body>
 </html>
