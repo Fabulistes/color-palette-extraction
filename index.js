@@ -1,22 +1,21 @@
-const buildPalette = (colorsList) => {
-  const paletteContainer = document.getElementById("palette");
-  const complementaryContainer = document.getElementById("complementary");
+const buildPalette = (colorsList, number) => {
+  let out = [];
+  const paletteContainer = document.getElementById("palette" + number);
   // reset the HTML in case you load various images
   paletteContainer.innerHTML = "";
-  complementaryContainer.innerHTML = "";
 
-  const orderedByColor = orderByLuminance(colorsList);
-  const hslColors = convertRGBtoHSL(orderedByColor);
+  // const orderedByColor = orderByLuminance(colorsList);
+  // const hslColors = convertRGBtoHSL(orderedByColor);
+
+  const orderedByColor = colorsList;
 
   for (let i = 0; i < orderedByColor.length; i++) {
     const hexColor = rgbToHex(orderedByColor[i]);
 
-    const hexColorComplementary = hslToHex(hslColors[i]);
-
     if (i > 0) {
       const difference = calculateColorDifference(
         orderedByColor[i],
-        orderedByColor[i - 1]
+        orderedByColor[i - 1] 
       );
 
       // if the distance is less than 120 we ommit that color
@@ -25,22 +24,16 @@ const buildPalette = (colorsList) => {
       }
     }
 
+    out.push(hexColor);
+
     // create the div and text elements for both colors & append it to the document
     const colorElement = document.createElement("div");
     colorElement.style.backgroundColor = hexColor;
     colorElement.appendChild(document.createTextNode(hexColor));
     paletteContainer.appendChild(colorElement);
-    // true when hsl color is not black/white/grey
-    if (hslColors[i].h) {
-      const complementaryElement = document.createElement("div");
-      complementaryElement.style.backgroundColor = `hsl(${hslColors[i].h},${hslColors[i].s}%,${hslColors[i].l}%)`;
-
-      complementaryElement.appendChild(
-        document.createTextNode(hexColorComplementary)
-      );
-      complementaryContainer.appendChild(complementaryElement);
-    }
   }
+
+  return out;
 };
 
 //  Convert each pixel value ( number ) to hexadecimal ( string ) with base 16
@@ -235,8 +228,7 @@ const findBiggestColorRange = (rgbValues) => {
  * Median cut implementation
  * can be found here -> https://en.wikipedia.org/wiki/Median_cut
  */
-const quantization = (rgbValues, depth) => {
-  const MAX_DEPTH = 4;
+const quantization = (rgbValues, depth, MAX_DEPTH) => {
 
   // Base case
   if (depth === MAX_DEPTH || rgbValues.length === 0) {
@@ -270,14 +262,14 @@ const quantization = (rgbValues, depth) => {
    *  4. Repeat process again, until desired depth or base case
    */
   const componentToSortBy = findBiggestColorRange(rgbValues);
-  rgbValues.sort((p1, p2) => {
-    return p1[componentToSortBy] - p2[componentToSortBy];
-  });
+  // rgbValues.sort((p1, p2) => {
+  //   return p1[componentToSortBy] - p2[componentToSortBy];
+  // });
 
   const mid = rgbValues.length / 2;
   return [
-    ...quantization(rgbValues.slice(0, mid), depth + 1),
-    ...quantization(rgbValues.slice(mid + 1), depth + 1),
+    ...quantization(rgbValues.slice(0, mid), depth + 1, MAX_DEPTH),
+    ...quantization(rgbValues.slice(mid + 1), depth + 1, MAX_DEPTH),
   ];
 };
 
@@ -297,26 +289,77 @@ const main = () => {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(image, 0, 0);
 
-      /**
-       * getImageData returns an array full of RGBA values
-       * each pixel consists of four values: the red value of the colour, the green, the blue and the alpha
-       * (transparency). For array value consistency reasons,
-       * the alpha is not from 0 to 1 like it is in the RGBA of CSS, but from 0 to 255.
-       */
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < 6; i++) {
 
-      // Convert the image data to RGB values so its much simpler
-      const rgbArray = buildRgb(imageData.data);
+        console.log('--------- part :', i);
+          /**
+         * getImageData returns an array full of RGBA values
+         * each pixel consists of four values: the red value of the colour, the green, the blue and the alpha
+         * (transparency). For array value consistency reasons,
+         * the alpha is not from 0 to 1 like it is in the RGBA of CSS, but from 0 to 255.
+         */
 
-      /**
-       * Color quantization
-       * A process that reduces the number of colors used in an image
-       * while trying to visually maintin the original image as much as possible
-       */
-      const quantColors = quantization(rgbArray, 0);
+        let imageData;
 
-      // Create the HTML structure to show the color palette
-      buildPalette(quantColors);
+        let c3 = canvas.width / 3;
+        let h2 = canvas.height / 2;
+
+        switch (i) {
+          case 0:
+            imageData = ctx.getImageData(0, 0, c3, h2);
+            break;
+          case 1:
+            imageData = ctx.getImageData(c3, 0, c3, h2);
+            break;
+          case 2:
+            imageData = ctx.getImageData(c3 * 2, 0, c3, h2);
+            break;
+          case 3:
+            imageData = ctx.getImageData(0, h2, c3, h2);
+            break;
+          case 4:
+            imageData = ctx.getImageData(c3, h2, c3, h2);
+            break;
+          case 5:
+            imageData = ctx.getImageData(c3 * 2, h2, c3, h2);
+            break;
+        }
+        
+
+        // Convert the image data to RGB values so its much simpler
+        const rgbArray = buildRgb(imageData.data);
+
+        let palette = [];
+
+        for (let depth = 6; depth < 12; depth++) {
+          
+          console.log('try depth :', depth);
+
+            /**
+           * Color quantization
+           * A process that reduces the number of colors used in an image
+           * while trying to visually maintin the original image as much as possible
+           */
+          const quantColors = quantization(rgbArray, 0, depth);
+          
+          palette = buildPalette(quantColors, i);
+
+          if(palette.length >= 40) {
+            break;
+          }
+          
+        }
+        
+
+        console.log(palette.length);
+
+        if(palette.length < 40) {
+          console.log('non');
+        }else {
+          console.log('oui');
+        }
+
+      }
     };
     image.src = fileReader.result;
   };

@@ -18,8 +18,7 @@ canvas {
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
-#palette,
-#complementary {
+.palette {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -27,8 +26,7 @@ canvas {
   width: 80%;
 }
 
-#palette div,
-#complementary div {
+.palette div {
   height: 120px;
   width: 120px;
   display: flex;
@@ -43,8 +41,7 @@ canvas {
   text-shadow: 1px 1px #333;
 }
 
-#palette div,
-#complementary div {
+.palette div {
   height: 120px;
   width: 120px;
   display: flex;
