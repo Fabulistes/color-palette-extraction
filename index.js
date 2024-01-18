@@ -459,13 +459,28 @@ const loadVideo = () => {
       if(currentFrame < Math.floor(videoEl.duration * framerate)) {
         currentFrame++;
         videoEl.currentTime = (videoEl.duration / (videoEl.duration * framerate)) * currentFrame;
-      }else {
+      }else { // process done
+
+        for (let p = 0; p < videoColors.length; p++) {
+          const time = videoColors[p];
+          for (let k = 0; k < time.length; k++) {
+            const cloud = time[k];
+            let str = '';
+            for (let i = 0; i < cloud.length; i++) {
+              const color = cloud[i];
+              str += color.slice(1);
+              str += i == cloud.length / 2 - 1 ? ':' : i == cloud.length - 1 ? '' : ',';
+            }
+            videoColors[p][k] = str;
+          }
+        } 
+
         console.log(videoColors);
 
         let out = {
           generator: 'Color palette creator',
           filename: file.filename,
-          author: 'loic.link',
+          author: 'Loic Quinquenel',
           github: 'https://github.com/Fabulistes/color-palette-extraction',
           data: videoColors
         }
