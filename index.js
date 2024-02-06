@@ -482,8 +482,8 @@ const loadVideo = () => {
           filename: file.filename,
           author: 'Loic Quinquenel',
           github: 'https://github.com/Fabulistes/color-palette-extraction',
-          data: videoColors,
-          dataLength: videoColors.length
+          dataLength: videoColors.length,
+          data: videoColors
         }
 
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(out));
